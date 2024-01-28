@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Modal, Button, Form } from "react-bootstrap";
+import { ModalA, ModalB, ModalC } from "./Modals";
 
 const Problem2 = () => {
   const [showModalA, setShowModalA] = useState(false);
@@ -95,40 +95,11 @@ const Problem2 = () => {
   };
 
   const handleSearchChange = (event) => {
-    const inputValue = event.target.value;
-    setSearchTerm(inputValue);
-
-    // Check if the entered value is a valid positive integer (ID)
-    const isValidId = /^\d+$/.test(inputValue) && parseInt(inputValue, 10) > 0;
-
-    if (isValidId) {
-      // Fetch contacts with the specified ID
-      fetchContactsById(inputValue);
-    } else {
-      // Add a delay before fetching to avoid making requests on every keystroke
-      setTimeout(() => fetchContacts(false, 1), 300);
-    }
-  };
-
-  const fetchContactsById = async (id) => {
-    try {
-      setLoading(true);
-      const response = await fetch(
-        `https://contact.mediusware.com/api/contacts/${id}/`
-      );
-      const data = await response.json();
-      console.log("API Response for ID search:", data);
-
-      setContacts([data]); // Display the single contact with the specified ID
-    } catch (error) {
-      console.error("Error fetching contact by ID:", error);
-    } finally {
-      setLoading(false);
-    }
+    setSearchTerm(event.target.value);
+    setTimeout(() => fetchContacts(false, 1), 300);
   };
 
   const handleSearchKeyDown = (event) => {
-    // If Enter key is pressed, immediately fetch contacts
     if (event.key === "Enter") {
       fetchContacts(false, 1);
     }
@@ -157,133 +128,45 @@ const Problem2 = () => {
         </div>
 
         {/* Modal A */}
-        <Modal show={showModalA} onHide={handleCloseModals}>
-          <Modal.Header closeButton>
-            <Modal.Title>All Contacts</Modal.Title>
-          </Modal.Header>
-          <Modal.Body ref={modalRef}>
-            {/* Search Input */}
-            <Form.Control
-              type="text"
-              placeholder="Search contacts..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-              onKeyDown={handleSearchKeyDown}
-            />
-            {/* Display All Contacts */}
-            {contacts
-              .filter(
-                (contact) => !onlyEven || (onlyEven && contact.id % 2 === 0)
-              )
-              .map((contact) => (
-                <div
-                  key={contact.id}
-                  onClick={() => handleContactClick(contact)}
-                >
-                  {`ID: ${contact.id}, Phone: ${contact.phone}, Country: ${contact.country.name}`}
-                </div>
-              ))}
-            {loading && <p>Loading...</p>}
-          </Modal.Body>
-          <Modal.Footer>
-            {/* Checkbox */}
-            <Form.Check
-              type="checkbox"
-              label="Only even"
-              checked={onlyEven}
-              onChange={() => setOnlyEven(!onlyEven)}
-            />
-            {/* Modal Buttons */}
-            <Button variant="secondary" onClick={handleOpenModalA}>
-              All Contacts
-            </Button>
-            <Button variant="primary" onClick={handleOpenModalB}>
-              US Contacts
-            </Button>
-            <Button variant="danger" onClick={handleCloseModals}>
-              Close
-            </Button>
-          </Modal.Footer>
-        </Modal>
+        <ModalA
+          showModal={showModalA}
+          handleCloseModals={handleCloseModals}
+          onlyEven={onlyEven}
+          setOnlyEven={setOnlyEven}
+          contacts={contacts}
+          handleContactClick={handleContactClick}
+          handleOpenModalA={handleOpenModalA}
+          handleOpenModalB={handleOpenModalB}
+          searchTerm={searchTerm}
+          handleSearchChange={handleSearchChange}
+          handleSearchKeyDown={handleSearchKeyDown}
+          loading={loading}
+          modalRef={modalRef}
+        />
 
         {/* Modal B */}
-        <Modal show={showModalB} onHide={handleCloseModals}>
-          <Modal.Header closeButton>
-            <Modal.Title>US Contacts</Modal.Title>
-          </Modal.Header>
-          <Modal.Body ref={modalRef}>
-            {/* Search Input */}
-            <Form.Control
-              type="text"
-              placeholder="Search contacts..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-              onKeyDown={handleSearchKeyDown}
-            />
-            {/* Display US Contacts */}
-            {contacts
-              .filter((contact) => contact.country.name === "United States")
-              .filter(
-                (contact) => !onlyEven || (onlyEven && contact.id % 2 === 0)
-              )
-              .map((contact) => (
-                <div
-                  key={contact.id}
-                  onClick={() => handleContactClick(contact)}
-                >
-                  {`ID: ${contact.id}, Phone: ${contact.phone}, Country: ${contact.country.name}`}
-                </div>
-              ))}
-            {loading && <p>Loading...</p>}
-          </Modal.Body>
-          <Modal.Footer>
-            {/* Checkbox */}
-            <Form.Check
-              type="checkbox"
-              label="Only even"
-              checked={onlyEven}
-              onChange={() => setOnlyEven(!onlyEven)}
-            />
-            {/* Modal Buttons */}
-            <Button variant="primary" onClick={handleOpenModalA}>
-              All Contacts
-            </Button>
-            <Button variant="warning" onClick={handleOpenModalB}>
-              US Contacts
-            </Button>
-            <Button variant="danger" onClick={handleCloseModals}>
-              Close
-            </Button>
-          </Modal.Footer>
-        </Modal>
+        <ModalB
+          showModal={showModalB}
+          handleCloseModals={handleCloseModals}
+          onlyEven={onlyEven}
+          setOnlyEven={setOnlyEven}
+          contacts={contacts}
+          handleContactClick={handleContactClick}
+          handleOpenModalA={handleOpenModalA}
+          handleOpenModalB={handleOpenModalB}
+          searchTerm={searchTerm}
+          handleSearchChange={handleSearchChange}
+          handleSearchKeyDown={handleSearchKeyDown}
+          loading={loading}
+          modalRef={modalRef}
+        />
 
-        {/* Add Modal C */}
-        <Modal show={showModalC} onHide={handleCloseModals}>
-          <Modal.Header closeButton>
-            <Modal.Title>Contact Details</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            {selectedContact && (
-              <div>
-                <p>{`ID: ${selectedContact.id}`}</p>
-                <p>{`Phone: ${selectedContact.phone}`}</p>
-                <p>{`Country: ${selectedContact.country.name}`}</p>
-              </div>
-            )}
-          </Modal.Body>
-          <Modal.Footer>
-            {/* Modal Buttons */}
-            <Button variant="primary" onClick={handleOpenModalA}>
-              All Contacts
-            </Button>
-            <Button variant="warning" onClick={handleOpenModalB}>
-              US Contacts
-            </Button>
-            <Button variant="danger" onClick={handleCloseModals}>
-              Close
-            </Button>
-          </Modal.Footer>
-        </Modal>
+        {/* Modal C */}
+        <ModalC
+          showModal={showModalC}
+          handleCloseModals={handleCloseModals}
+          selectedContact={selectedContact}
+        />
       </div>
     </div>
   );
