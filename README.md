@@ -18,4 +18,17 @@ https://github.com/jayeeed/react-task/assets/137998593/b8a7f7b6-fea6-467b-b56e-e
 
 ## Implementation
 
+### Problem-1
+
+Add task with "Name" and "Status"
+sorted by ```Active > Completed > Others```
+
+### Problem-2
+
+1. Fetch Contact Information from the given API.
+2. Two different window for "All contacts" and "US contacts".
+3. Sort Contacts by "ID".
+4. Filter Contacts by "Even".
+
+
 
