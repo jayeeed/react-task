@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
 
 const Problem2 = () => {
@@ -8,31 +8,68 @@ const Problem2 = () => {
   const [onlyEven, setOnlyEven] = useState(false);
   const [contacts, setContacts] = useState([]);
   const [selectedContact, setSelectedContact] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const modalRef = useRef(null);
 
   // Fetch all contacts
   useEffect(() => {
     fetchContacts();
   }, []);
 
-  const fetchContacts = async (usOnly) => {
+  useEffect(() => {
+    const modal = modalRef.current;
+    if (modal) {
+      modal.addEventListener("scroll", handleScroll);
+      return () => modal.removeEventListener("scroll", handleScroll);
+    }
+  }, []);
+
+  const handleScroll = () => {
+    const modal = modalRef.current;
+    if (
+      modal.scrollHeight - modal.scrollTop === modal.clientHeight &&
+      !loading
+    ) {
+      loadNextPage();
+    }
+  };
+
+  const fetchContacts = async (usOnly, page = 1) => {
     const url = usOnly
-      ? "https://contact.mediusware.com/api/contacts/?country.name=US"
-      : "https://contact.mediusware.com/api/contacts/";
+      ? `https://contact.mediusware.com/api/contacts/?country.name=US&page=${page}`
+      : `https://contact.mediusware.com/api/contacts/?page=${page}&search=${searchTerm}`;
 
     try {
+      setLoading(true);
       const response = await fetch(url);
       const data = await response.json();
       console.log("API Response:", data);
-      setContacts(data.results);
+
+      if (page === 1) {
+        setContacts(data.results);
+      } else {
+        setContacts((prevContacts) => [...prevContacts, ...data.results]);
+      }
+
+      setCurrentPage(page + 1);
     } catch (error) {
       console.error("Error fetching contacts:", error);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const loadNextPage = () => {
+    fetchContacts(false, currentPage);
   };
 
   const handleOpenModalA = () => {
     setShowModalA(true);
     setShowModalB(false);
     setShowModalC(false);
+    setCurrentPage(1);
     fetchContacts(false);
   };
 
@@ -40,6 +77,7 @@ const Problem2 = () => {
     setShowModalA(false);
     setShowModalB(true);
     setShowModalC(false);
+    setCurrentPage(1);
     fetchContacts(true);
   };
 
@@ -47,11 +85,53 @@ const Problem2 = () => {
     setShowModalA(false);
     setShowModalB(false);
     setShowModalC(false);
+    setSearchTerm("");
+    setCurrentPage(1);
   };
 
   const handleContactClick = (contact) => {
     setSelectedContact(contact);
     setShowModalC(true);
+  };
+
+  const handleSearchChange = (event) => {
+    const inputValue = event.target.value;
+    setSearchTerm(inputValue);
+
+    // Check if the entered value is a valid positive integer (ID)
+    const isValidId = /^\d+$/.test(inputValue) && parseInt(inputValue, 10) > 0;
+
+    if (isValidId) {
+      // Fetch contacts with the specified ID
+      fetchContactsById(inputValue);
+    } else {
+      // Add a delay before fetching to avoid making requests on every keystroke
+      setTimeout(() => fetchContacts(false, 1), 300);
+    }
+  };
+
+  const fetchContactsById = async (id) => {
+    try {
+      setLoading(true);
+      const response = await fetch(
+        `https://contact.mediusware.com/api/contacts/${id}/`
+      );
+      const data = await response.json();
+      console.log("API Response for ID search:", data);
+
+      setContacts([data]); // Display the single contact with the specified ID
+    } catch (error) {
+      console.error("Error fetching contact by ID:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearchKeyDown = (event) => {
+    // If Enter key is pressed, immediately fetch contacts
+    if (event.key === "Enter") {
+      fetchContacts(false, 1);
+    }
   };
 
   return (
@@ -63,12 +143,14 @@ const Problem2 = () => {
           <button
             className="btn btn-lg btn-outline-primary"
             onClick={handleOpenModalA}
+            style={{ backgroundColor: "#46139f", color: "white" }}
           >
             All Contacts
           </button>
           <button
             className="btn btn-lg btn-outline-warning"
             onClick={handleOpenModalB}
+            style={{ backgroundColor: "#ff7f50", color: "white" }}
           >
             US Contacts
           </button>
@@ -79,7 +161,15 @@ const Problem2 = () => {
           <Modal.Header closeButton>
             <Modal.Title>All Contacts</Modal.Title>
           </Modal.Header>
-          <Modal.Body>
+          <Modal.Body ref={modalRef}>
+            {/* Search Input */}
+            <Form.Control
+              type="text"
+              placeholder="Search contacts..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+              onKeyDown={handleSearchKeyDown}
+            />
             {/* Display All Contacts */}
             {contacts
               .filter(
@@ -93,6 +183,7 @@ const Problem2 = () => {
                   {`ID: ${contact.id}, Phone: ${contact.phone}, Country: ${contact.country.name}`}
                 </div>
               ))}
+            {loading && <p>Loading...</p>}
           </Modal.Body>
           <Modal.Footer>
             {/* Checkbox */}
@@ -120,7 +211,15 @@ const Problem2 = () => {
           <Modal.Header closeButton>
             <Modal.Title>US Contacts</Modal.Title>
           </Modal.Header>
-          <Modal.Body>
+          <Modal.Body ref={modalRef}>
+            {/* Search Input */}
+            <Form.Control
+              type="text"
+              placeholder="Search contacts..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+              onKeyDown={handleSearchKeyDown}
+            />
             {/* Display US Contacts */}
             {contacts
               .filter((contact) => contact.country.name === "United States")
@@ -135,6 +234,7 @@ const Problem2 = () => {
                   {`ID: ${contact.id}, Phone: ${contact.phone}, Country: ${contact.country.name}`}
                 </div>
               ))}
+            {loading && <p>Loading...</p>}
           </Modal.Body>
           <Modal.Footer>
             {/* Checkbox */}
